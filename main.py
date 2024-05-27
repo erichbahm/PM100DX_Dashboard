@@ -11,11 +11,16 @@ import time
 
 FILE = 'capture.txt'
 W = True
-ROW = []
-COLS = [1,3,4,5,6,9,10,17]
-fig, ([ax1, ax2, ax3], [ax4, ax5, ax6]) = plt.subplots(2, 3)
-LIM = 3
 plot = True
+ROW = []
+COLS = []
+CONV = {}
+LIM = 3
+
+for i in range(20): COLS.append(i)
+for i in range(20): CONV.update({i:lambda x: int(x, 16)})
+fig, ([ax1, ax2, ax3], [ax4, ax5, ax6]) = plt.subplots(2, 3)
+
 
 class Index:
     def stop(self, event):
@@ -27,10 +32,11 @@ if __name__ == '__main__':
         bstop = Button(ax6,'Stop')
         bstop.on_clicked(callback.stop)
         try:
-            df = pd.read_csv(FILE,sep=' ',skiprows=LIM,usecols=COLS,on_bad_lines ='skip',converters={6:lambda x: int(x, 16),1:lambda x: int(x, 16),3:lambda x: int(x, 16),5:lambda x: int(x, 16),4:lambda x: int(x, 16),10:lambda x: int(x, 16),9:lambda x: int(x, 16),17:lambda x: int(x, 16)})
+            df = pd.read_csv(FILE, sep=' ', skiprows=LIM, usecols=COLS, converters=CONV, on_bad_lines='skip')
             na = df.to_numpy()
         except:
-            continue
+            plot = False
+            print("CSV conversion Error")
         # 1: Accel Input
         # 3: Torque command
         # 4: DC voltage
@@ -39,17 +45,17 @@ if __name__ == '__main__':
         # 9: IQ Command
         # 10: IQ Feedback
         # 17: Fault
-        accel = na[:, [0]] / 100
-        torque = na[:, [1]] / 10
-        dcv = na[:, [2]] / 10
-        dci = na[:,3] / 10
-        speed = na[:, [4]]
+        accel = na[:, [1]] / 100
+        torque = na[:, [3]] / 10
+        dcv = na[:, [4]] / 10
+        dci = na[:,5] / 10
+        speed = na[:, [6]]
         for i in range(speed.size):
             if speed[i] > 32766:
                 speed[i] -= 65535
-        IQC = na[:, [5]] / 10
-        IQF = na[:, [6]] / 10
-        fault = na[:, [7]]
+        IQC = na[:, [9]] / 10
+        IQF = na[:, [10]] / 10
+        fault = na[:, [17]]
         x = np.linspace(0, speed.size, speed.size)
 
         ax1.plot(x, speed, color='tab:blue')
@@ -71,5 +77,4 @@ if __name__ == '__main__':
         #ax5.set_ylabel('IQ (Apk)')
 
         if fault[fault.size-1][0]: print("FAULT")
-
-        plt.pause(0.25)
+        plt.pause(0.5)
