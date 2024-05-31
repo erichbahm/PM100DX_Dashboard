@@ -37,31 +37,37 @@ if __name__ == '__main__':
         except:
             plot = False
             print("CSV conversion Error")
-        # 1: Accel Input
-        # 3: Torque command
-        # 4: DC voltage
-        # 5: DC current
-        # 6: Motor speed
-        # 9: IQ Command
-        # 10: IQ Feedback
-        # 17: Fault
-        accel = na[:, [1]] / 100
-        torque = na[:, [3]] / 10
-        dcv = na[:, [4]] / 10
-        dci = na[:,5] / 10
-        speed = na[:, [6]]
+
+        t = na[:, [0]] /3          # ms, time elapsed
+        accel = na[:, [1]] / 100   # V, accel pot-input
+        FT = na[:, [2]] / 10       # Nm, torque feedback
+        for i in range(FT.size):
+            if FT[i] > 3276.6: FT[i] -= 6553.5
+        CT = na[:, [3]] / 10       # Nm, torque commanded
+        dcv = na[:, [4]] / 10      # V, DC Voltage
+        dci = na[:,5] / 10         # A, DC Current
+        speed = na[:, [6]]         # RPM, motor speed
         for i in range(speed.size):
-            if speed[i] > 32766:
-                speed[i] -= 65535
-        IQC = na[:, [9]] / 10
-        IQF = na[:, [10]] / 10
-        fault = na[:, [17]]
-        x = np.linspace(0, speed.size, speed.size)
+            if speed[i] > 32766: speed[i] -= 65535
+        aci = na[:, [7]] / 10     # Apk, flux weakening output
+        acv = na[:, [8]] / 10     # Vpk, motor peak-peak voltage
+        IQC = na[:, [9]] / 10     # Apk, IQ commanded
+        IQF = na[:, [10]] / 10    # Apk, IQ feedback
+        IDC = na[:, [11]] / 10    # Apk, ID commanded
+        IDF = na[:, [12]] / 10    # Apk, ID feedback
+        mod = na[:, [13]] / 10000 # Modulation
+        Itemp = na[:, [14]] / 10  # C, inverter temp
+        Mtemp = na[:, [15]] / 10  # C, motor temp
+        Lfault = na[:, [16]]      # run fault lo
+        Hfault = na[:, [17]]      # run fault hi
+        shudd = na[:, [18]] / 10  # Nm, torque shudder
+        brake = na[:, [18]] / 100 # V, brake pot-input
+        x = np.linspace(0, speed.shape[0], na.shape[0])
 
         ax1.plot(x, speed, color='tab:blue')
         ax2.plot(x, dcv, color='tab:green')
         ax2.plot(x, dci, color='tab:green')
-        ax2.plot(x, torque, color='tab:red')
+        ax3.plot(x, FT, color='tab:red')
         ax3.plot(x, accel, color='tab:orange')
         #ax5.plot(x, IQC, color='tab:red')
         #ax4.plot(x, IQF, color='tab:pink')
@@ -76,5 +82,5 @@ if __name__ == '__main__':
         ax3.set_ylabel('Acceleration input (V)')
         #ax5.set_ylabel('IQ (Apk)')
 
-        if fault[fault.size-1][0]: print("FAULT")
-        plt.pause(0.5)
+        if Hfault[Hfault.size-1][0]: print("FAULT")
+        plt.pause(500)
